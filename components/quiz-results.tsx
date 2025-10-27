@@ -1,26 +1,37 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { CheckCircle2, XCircle, Download, Share2 } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, XCircle, Download, Share2 } from "lucide-react";
 
 interface QuizResultsProps {
-  score: number
-  totalQuestions: number
-  timeSpent: number
-  feedback: string[]
+  score: number;
+  totalQuestions: number;
+  timeSpent: number;
+  feedback: string[];
 }
 
-export function QuizResults({ score, totalQuestions, timeSpent, feedback }: QuizResultsProps) {
-  const percentage = Math.round((score / totalQuestions) * 100)
-  const minutes = Math.floor(timeSpent / 60)
-  const seconds = timeSpent % 60
+export function QuizResults({
+  score,
+  totalQuestions,
+  timeSpent,
+  feedback,
+}: QuizResultsProps) {
+  const percentage = Math.round((score / totalQuestions) * 100);
+  const minutes = Math.floor(timeSpent / 60);
+  const seconds = timeSpent % 60;
 
   const getResultColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600"
-    if (percentage >= 60) return "text-yellow-600"
-    return "text-red-600"
-  }
+    if (percentage >= 80) return "text-green-600";
+    if (percentage >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
 
   return (
     <div className="space-y-6">
@@ -32,7 +43,13 @@ export function QuizResults({ score, totalQuestions, timeSpent, feedback }: Quiz
         </CardHeader>
         <CardContent className="text-center space-y-6">
           <div>
-            <div className={`text-6xl font-bold ${getResultColor(percentage)} mb-2`}>{percentage}%</div>
+            <div
+              className={`text-6xl font-bold ${getResultColor(
+                percentage
+              )} mb-2`}
+            >
+              {percentage}%
+            </div>
             <p className="text-lg text-muted-foreground">
               You got {score} out of {totalQuestions} questions correct
             </p>
@@ -47,7 +64,9 @@ export function QuizResults({ score, totalQuestions, timeSpent, feedback }: Quiz
             </div>
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">Accuracy</p>
-              <p className="text-2xl font-bold text-foreground">{percentage}%</p>
+              <p className="text-2xl font-bold text-foreground">
+                {percentage}%
+              </p>
             </div>
           </div>
 
@@ -68,15 +87,17 @@ export function QuizResults({ score, totalQuestions, timeSpent, feedback }: Quiz
       <Card>
         <CardHeader>
           <CardTitle>AI Feedback</CardTitle>
-          <CardDescription>Personalized insights on your performance</CardDescription>
+          <CardDescription>
+            Personalized insights on your performance
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {feedback.map((item, i) => (
             <div key={i} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
               {i % 2 === 0 ? (
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
               ) : (
-                <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
               )}
               <p className="text-sm text-foreground">{item}</p>
             </div>
@@ -90,17 +111,26 @@ export function QuizResults({ score, totalQuestions, timeSpent, feedback }: Quiz
           <CardTitle>What's Next?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Button variant="outline" className="w-full justify-start bg-transparent">
+          <Button
+            variant="outline"
+            className="w-full justify-start bg-transparent"
+          >
             Review Weak Topics
           </Button>
-          <Button variant="outline" className="w-full justify-start bg-transparent">
+          <Button
+            variant="outline"
+            className="w-full justify-start bg-transparent"
+          >
             Get Personalized Recommendations
           </Button>
-          <Button variant="outline" className="w-full justify-start bg-transparent">
+          <Button
+            variant="outline"
+            className="w-full justify-start bg-transparent"
+          >
             Retake Quiz
           </Button>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
