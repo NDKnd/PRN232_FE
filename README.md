@@ -1,29 +1,53 @@
-## 🖥️ Frontend (React + TypeScript)
+# 🎓 Math Education App - Coding Standards
+
+## 🚀 Quick Start
+
+```powershell
+# Backend: https://localhost:7000
+cd BE/controllers && dotnet run
+
+# Frontend: http://localhost:3000
+cd math-education-app && pnpm dev
+```
+
+**Setup**: Tạo `.env.local` → `NEXT_PUBLIC_API_URL=https://localhost:7000/api`
+
+**Docs**: Xem `docs/INTEGRATION_GUIDE.md` để biết cách dùng API
+
+---
+
+## 🖥️ Frontend (Next.js + TypeScript)
 
 ### 1\. Cấu trúc dự án
 
 ```txt
-src/
- ├── assets/          # Hình ảnh, css, font
- ├── components/      # UI components (chung)
+math-education-app/
+ ├── app/                  # Next.js App Router
+ │   ├── login/           # Login page
+ │   ├── teacher/         # Teacher pages
+ │   └── student/         # Student pages
+ ├── components/          # UI components (chung)
+ │   ├── ui/             # Shadcn components
  │   └── Button.tsx
- │   └── UserCard.tsx
- ├── hooks/           # Custom hooks
- │   └── useAuth.ts
- │   └── useFetch.ts
- ├── pages/           # Các trang (dùng router)
- │   └── Home.tsx
- │   └── Profile.tsx
- ├── services/        # API calls
- │   └── user.service.ts
- ├── types/           # Định nghĩa interface, type chung
- │   └── user.type.ts
- │   └── api-response.type.ts
- ├── utils/           # Hàm tiện ích
- │   └── formatDate.ts
- │   └── storage.ts
- ├── App.tsx
- └── main.tsx
+ ├── features/           # Feature modules (API + Types)
+ │   ├── auth/           # Authentication
+ │   ├── users/          # User management
+ │   ├── lesson-plans/   # Lesson plans
+ │   └── difficulties/   # Difficulties
+ ├── lib/
+ │   └── api/            # API client & endpoints
+ ├── hooks/              # Custom hooks
+ │   └── use-toast.ts
+ ├── types/              # Shared types
+ └── utils/              # Utility functions
+```
+
+**Feature Module Pattern**:
+```txt
+features/auth/
+ ├── api.ts        # API calls (authApi.login, authApi.register)
+ ├── types.ts      # Types & interfaces
+ └── index.ts      # Public exports
 ```
 
 ### 2\. Quy tắc đặt tên
@@ -75,7 +99,7 @@ src/
 
 ### 4\. UI & Logic
 
-  * **Tách biệt logic và UI**: Logic phức tạp nên đặt trong `hooks` hoặc `services`, UI giữ đơn giản trong `component`.
+  * **Tách biệt logic và UI**: Logic phức tạp nên đặt trong `hooks` hoặc `features`, UI giữ đơn giản trong `component`.
   * Tránh viết quá nhiều logic tính toán trực tiếp trong JSX.
   * Luôn kiểm tra `null`/`undefined` trước khi render (sử dụng optional chaining `?.` hoặc conditional rendering).
     ```tsx
@@ -83,6 +107,51 @@ src/
 
     // Hoặc
     {user?.name}
+    ```
+
+### 5\. API Calls (Feature Module)
+
+  * **Không gọi API trực tiếp** trong component. Dùng feature modules.
+  * Import từ `features/` thay vì `lib/api/`.
+  * Luôn check `response.success` trước khi dùng `response.data`.
+
+    ```typescript
+    // ✅ ĐÚNG
+    import { authApi, authStorage } from '@/features/auth';
+    
+    const res = await authApi.login({ username, password });
+    if (res.success) {
+      authStorage.saveToken(res.data.token);
+    } else {
+      console.error(res.error?.message);
+    }
+
+    // ❌ SAI - Không gọi trực tiếp
+    const res = await fetch('/api/auth/login');
+    ```
+
+### 6\. Server vs Client Components (Next.js)
+
+  * **Server Component** (default): Fetch data trực tiếp, không dùng `useState`/`useEffect`.
+  * **Client Component**: Thêm `'use client'` ở đầu file, có thể dùng hooks.
+
+    ```typescript
+    // Server Component (app/lessons/page.tsx)
+    import { lessonPlanApi } from '@/features/lesson-plans';
+    
+    export default async function LessonsPage() {
+      const res = await lessonPlanApi.getAll();
+      return <div>{res.data?.map(...)}</div>;
+    }
+
+    // Client Component (components/LoginForm.tsx)
+    'use client';
+    import { useState } from 'react';
+    
+    export default function LoginForm() {
+      const [username, setUsername] = useState('');
+      // ...
+    }
     ```
 
 -----

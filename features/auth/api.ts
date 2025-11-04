@@ -1,52 +1,46 @@
 /**
  * Auth API
  * Authentication-related API calls
+ * Updated to match Backend API
  */
 
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import type { ApiResponse } from "@/lib/api";
-import type { LoginDto, AuthResponse, AuthUser } from "./types";
+import type {
+  LoginDto,
+  RegisterDto,
+  AuthResponse,
+  User,
+  AuthUser,
+} from "./types";
 
 export const authApi = {
   /**
    * Login user
+   * POST /api/auth/login
+   * Body: { username, password }
+   * Response: { token, userId, username, role }
    */
   login: (data: LoginDto): Promise<ApiResponse<AuthResponse>> => {
     return apiClient.post<AuthResponse>(ENDPOINTS.AUTH.LOGIN, data);
   },
 
   /**
-   * Logout user
+   * Register new user
+   * POST /api/auth/register
+   * Body: { username, email, password, role, levelId, gradeLevel? }
+   * Response: { userId, username, email, role, levelId, gradeLevel, isActive, createdAt }
    */
-  logout: (): Promise<ApiResponse<void>> => {
-    return apiClient.post<void>(ENDPOINTS.AUTH.LOGOUT, {});
+  register: (data: RegisterDto): Promise<ApiResponse<User>> => {
+    return apiClient.post<User>(ENDPOINTS.AUTH.REGISTER, data);
   },
 
   /**
-   * Get current user profile
+   * Logout user (client-side only)
+   * Backend không có endpoint logout
    */
-  getProfile: (): Promise<ApiResponse<AuthUser>> => {
-    return apiClient.get<AuthUser>(ENDPOINTS.AUTH.PROFILE);
-  },
-
-  /**
-   * Refresh token
-   */
-  refreshToken: (): Promise<ApiResponse<{ token: string }>> => {
-    return apiClient.post<{ token: string }>(ENDPOINTS.AUTH.REFRESH, {});
-  },
-
-  /**
-   * Change password
-   */
-  changePassword: (
-    oldPassword: string,
-    newPassword: string
-  ): Promise<ApiResponse<void>> => {
-    return apiClient.post<void>(ENDPOINTS.AUTH.CHANGE_PASSWORD, {
-      oldPassword,
-      newPassword,
-    });
+  logout: (): void => {
+    authStorage.clear();
   },
 };
 

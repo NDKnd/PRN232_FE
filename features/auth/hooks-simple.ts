@@ -57,18 +57,23 @@ export function useAuth() {
         };
 
         const response = await authApi.login(loginData);
-        // Force success for testing purposes
-        response.success = true;
-        response.data = {
-          token: "dummy-token",
-          user: {
-            userId: 1,
-            username: "testuser",
-            email: loginData.email,
-            fullName: "Test User",
-            role: role,
-          },
-        };
+
+        // --------- FOR TEST ----------
+        if (process.env.NEXT_PUBLIC_DEMO === "true") {
+          // demo mode: fake a successful response
+          response.success = true;
+          response.data = {
+            token: "dummy-token",
+            user: {
+              userId: 1,
+              username: "demo",
+              email: loginData.email,
+              fullName: "Demo User",
+              role,
+            },
+          };
+        }
+        // -----------------------------
 
         if (response.success && response.data) {
           // Save token and user data
