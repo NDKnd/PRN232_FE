@@ -6,3 +6,26 @@ export type {
   User,
 } from "./auth.type";
 export type { ApiResponse } from "./api-response.type";
+export type {
+  AiChatMessage,
+  AiChatRequest,
+  AiChatResponse,
+  AiLessonPlanRequest,
+  AiLessonPlanResponse,
+  LessonActivity,
+  GeneratedLessonPlan,
+  AiQuestionRequest,
+  AiQuestionResponse,
+  GeneratedQuestion,
+  SavedQuestion,
+  AiQuizRequest,
+  AiQuizResponse,
+  GeneratedQuiz,
+  AiRequestHistory,
+  AiHealthStatus,
+  LessonPlanFormData,
+  QuestionFormData,
+  QuizFormData,
+  AiGenerateMode,
+  AiGenerateResult,
+} from "./ai.type";

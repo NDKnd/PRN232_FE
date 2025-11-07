@@ -7,7 +7,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { BookOpen, BarChart3, Settings, LogOut, Menu, X, FileText, HelpCircle, Zap } from "lucide-react"
+import { BookOpen, BarChart3, Settings, LogOut, Menu, X, FileText, HelpCircle, Zap, Bot, History } from "lucide-react"
 
 interface NavItem {
   label: string
@@ -27,6 +27,8 @@ export function SidebarNav({ role }: SidebarNavProps) {
     { label: "Dashboard", href: "/teacher/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
     { label: "Lesson Plans", href: "/teacher/lessons", icon: <BookOpen className="w-5 h-5" /> },
     { label: "Question Bank", href: "/teacher/questions", icon: <HelpCircle className="w-5 h-5" /> },
+    { label: "AI Workspace", href: "/teacher/ai-workspace", icon: <Bot className="w-5 h-5" /> },
+    { label: "AI History", href: "/teacher/ai-history", icon: <History className="w-5 h-5" /> },
     { label: "Export Center", href: "/teacher/export", icon: <FileText className="w-5 h-5" /> },
     { label: "Settings", href: "/teacher/settings", icon: <Settings className="w-5 h-5" /> },
   ]
