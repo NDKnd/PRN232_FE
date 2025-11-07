@@ -19,12 +19,11 @@ import { useAuth, type UserRole } from "@/features/auth";
 
 function LoginContent() {
   const searchParams = useSearchParams();
-  const role = (searchParams.get("role") || "student") as UserRole;
   const { loginState, updateField, handleLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleLogin(role);
+    await handleLogin();
   };
 
   return (
@@ -37,7 +36,7 @@ function LoginContent() {
           </div>
           <CardTitle>Sign In</CardTitle>
           <CardDescription>
-            Sign in as {role === "teacher" ? "Teacher" : "Student"}
+            Welcome back! Please sign in to continue
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,13 +48,13 @@ function LoginContent() {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={loginState.email}
-                onChange={(e) => updateField("email", e.target.value)}
+                id="username"
+                type="text"
+                placeholder="Enter your username"
+                value={loginState.username}
+                onChange={(e) => updateField("username", e.target.value)}
                 required
               />
             </div>
@@ -78,8 +77,13 @@ function LoginContent() {
               {loginState.isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Demo credentials: any email/password</p>
+          <div className="mt-4 text-center text-sm">
+            <p className="text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <a href="/register" className="text-primary hover:underline">
+                Register here
+              </a>
+            </p>
           </div>
         </CardContent>
       </Card>

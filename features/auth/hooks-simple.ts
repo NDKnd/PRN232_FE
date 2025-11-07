@@ -5,13 +5,14 @@
 
 import { useState, useCallback } from "react";
 import { authApi, authStorage } from "./api";
-import type { LoginDto, AuthUser, LoginState, UserRole } from "./types";
+import type { LoginDto, RegisterDto, AuthUser, LoginState, RegisterState, UserRole } from "./types";
 
 /**
  * Get redirect URL based on role
  */
-function getRedirectUrl(role: UserRole): string {
-  switch (role) {
+function getRedirectUrl(role: string): string {
+  const roleLower = role.toLowerCase();
+  switch (roleLower) {
     case "teacher":
       return "/teacher/dashboard";
     case "student":
@@ -28,7 +29,7 @@ function getRedirectUrl(role: UserRole): string {
  */
 export function useAuth() {
   const [loginState, setLoginState] = useState<LoginState>({
-    email: "",
+    username: "",
     password: "",
     isLoading: false,
     error: undefined,
@@ -43,7 +44,7 @@ export function useAuth() {
   }, []);
 
   const handleLogin = useCallback(
-    async (role: UserRole) => {
+    async (role?: UserRole) => {
       setLoginState((prev) => ({
         ...prev,
         isLoading: true,
@@ -52,36 +53,27 @@ export function useAuth() {
 
       try {
         const loginData: LoginDto = {
-          email: loginState.email,
+          username: loginState.username,
           password: loginState.password,
         };
 
         const response = await authApi.login(loginData);
 
-        // --------- FOR TEST ----------
-        if (process.env.NEXT_PUBLIC_DEMO === "true") {
-          // demo mode: fake a successful response
-          response.success = true;
-          response.data = {
-            token: "dummy-token",
-            user: {
-              userId: 1,
-              username: "demo",
-              email: loginData.email,
-              fullName: "Demo User",
-              role,
-            },
-          };
-        }
-        // -----------------------------
-
         if (response.success && response.data) {
           // Save token and user data
           authStorage.saveToken(response.data.token);
-          authStorage.saveUser(response.data.user);
+          
+          // Create AuthUser object from response
+          const authUser: AuthUser = {
+            userId: response.data.userId,
+            username: response.data.username,
+            role: response.data.role,
+          };
+          authStorage.saveUser(authUser);
 
-          // Redirect based on role
-          const redirectUrl = getRedirectUrl(role);
+          // Redirect based on role from backend
+          const userRole = response.data.role.toLowerCase() as UserRole;
+          const redirectUrl = getRedirectUrl(userRole);
           window.location.href = redirectUrl;
         } else {
           setLoginState((prev) => ({
@@ -98,12 +90,12 @@ export function useAuth() {
         }));
       }
     },
-    [loginState.email, loginState.password]
+    [loginState.username, loginState.password]
   );
 
   const reset = useCallback(() => {
     setLoginState({
-      email: "",
+      username: "",
       password: "",
       isLoading: false,
       error: undefined,
@@ -119,6 +111,113 @@ export function useAuth() {
 }
 
 /**
+ * Hook for register functionality
+ */
+export function useRegister() {
+  const [registerState, setRegisterState] = useState<RegisterState>({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "Student",
+    levelId: 1,
+    gradeLevel: "",
+    isLoading: false,
+    error: undefined,
+  });
+
+  const updateField = useCallback((field: keyof RegisterState, value: string | number) => {
+    setRegisterState((prev) => ({
+      ...prev,
+      [field]: value,
+      error: undefined, // Clear error when user types
+    }));
+  }, []);
+
+  const handleRegister = useCallback(async () => {
+    setRegisterState((prev) => ({
+      ...prev,
+      isLoading: true,
+      error: undefined,
+    }));
+
+    // Validate passwords match
+    if (registerState.password !== registerState.confirmPassword) {
+      setRegisterState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: "Passwords do not match",
+      }));
+      return false;
+    }
+
+    // Validate password length
+    if (registerState.password.length < 6) {
+      setRegisterState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: "Password must be at least 6 characters",
+      }));
+      return false;
+    }
+
+    try {
+      const registerData: RegisterDto = {
+        username: registerState.username,
+        email: registerState.email,
+        password: registerState.password,
+        role: registerState.role,
+        levelId: registerState.levelId,
+        gradeLevel: registerState.gradeLevel || undefined,
+      };
+
+      const response = await authApi.register(registerData);
+
+      if (response.success && response.data) {
+        // Registration successful, redirect to login
+        window.location.href = "/login?registered=true";
+        return true;
+      } else {
+        setRegisterState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: response.error?.message || "Registration failed",
+        }));
+        return false;
+      }
+    } catch (error) {
+      setRegisterState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: "An unexpected error occurred",
+      }));
+      return false;
+    }
+  }, [registerState]);
+
+  const reset = useCallback(() => {
+    setRegisterState({
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "Student",
+      levelId: 1,
+      gradeLevel: "",
+      isLoading: false,
+      error: undefined,
+    });
+  }, []);
+
+  return {
+    registerState,
+    updateField,
+    handleRegister,
+    reset,
+  };
+}
+
+/**
  * Hook for getting current user
  */
 export function useCurrentUser() {
@@ -129,28 +228,20 @@ export function useCurrentUser() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchUser = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await authApi.getProfile();
-      if (response.success && response.data) {
-        setUser(response.data);
-        authStorage.saveUser(response.data);
-      } else {
-        setError(response.error?.message || "Failed to fetch user");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
+    // Backend không có endpoint getProfile
+    // Chỉ lấy từ localStorage
+    const storedUser = authStorage.getUser();
+    if (storedUser) {
+      setUser(storedUser);
+    } else {
+      setError("No user found");
     }
   }, []);
 
   const logout = useCallback(async () => {
     setLoading(true);
     try {
-      await authApi.logout();
+      authApi.logout();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
@@ -195,6 +286,7 @@ export function useLogout() {
 
 /**
  * Hook for changing password
+ * Note: Backend chưa có endpoint change password
  */
 export function useChangePassword() {
   const [loading, setLoading] = useState(false);
@@ -208,14 +300,9 @@ export function useChangePassword() {
       setSuccess(false);
 
       try {
-        const response = await authApi.changePassword(oldPassword, newPassword);
-        if (response.success) {
-          setSuccess(true);
-          return true;
-        } else {
-          setError(response.error?.message || "Failed to change password");
-          return false;
-        }
+        // TODO: Implement when backend has change password endpoint
+        setError("Change password feature not implemented yet");
+        return false;
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         return false;

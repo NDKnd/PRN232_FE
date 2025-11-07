@@ -15,7 +15,7 @@ export interface RegisterDto {
   username: string;
   email: string;
   password: string;
-  role: UserRole; // "Teacher" | "Student" | "Admin"
+  role: string; // "Teacher" | "Student" | "Admin"
   levelId: number; // Required trong backend
   gradeLevel?: string; // Optional
 }
@@ -36,6 +36,18 @@ export interface AuthResponse {
 export interface LoginState {
   username: string;
   password: string;
+  isLoading: boolean;
+  error?: string;
+}
+
+export interface RegisterState {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: string;
+  levelId: number;
+  gradeLevel?: string;
   isLoading: boolean;
   error?: string;
 }

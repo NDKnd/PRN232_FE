@@ -28,7 +28,7 @@ class ApiClient {
 
   constructor() {
     this.baseURL =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5044/api";
     this.timeout = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 10000;
     this.defaultHeaders = {
       "Content-Type": "application/json",
@@ -57,7 +57,13 @@ class ApiClient {
     endpoint: string,
     params?: Record<string, string | number | boolean>
   ): string {
-    const url = new URL(endpoint, this.baseURL);
+    // Combine baseURL and endpoint properly
+    // Remove leading slash from endpoint if baseURL ends with slash
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const cleanBase = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
+    const fullUrl = cleanBase + cleanEndpoint;
+    
+    const url = new URL(fullUrl);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         url.searchParams.append(key, String(value));

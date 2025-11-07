@@ -21,8 +21,24 @@ export const authApi = {
    * Body: { username, password }
    * Response: { token, userId, username, role }
    */
-  login: (data: LoginDto): Promise<ApiResponse<AuthResponse>> => {
-    return apiClient.post<AuthResponse>(ENDPOINTS.AUTH.LOGIN, data);
+  login: async (data: LoginDto): Promise<ApiResponse<AuthResponse>> => {
+    const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.LOGIN, data);
+    
+    // Backend trả về data trực tiếp, không wrap trong { success, data }
+    // Cần transform response để phù hợp với ApiResponse format
+    if (response.success && response.data) {
+      return response;
+    }
+    
+    // Nếu backend trả về token trực tiếp (không có success wrapper)
+    if ((response as any).token) {
+      return {
+        success: true,
+        data: response as any,
+      };
+    }
+    
+    return response;
   },
 
   /**
@@ -31,8 +47,23 @@ export const authApi = {
    * Body: { username, email, password, role, levelId, gradeLevel? }
    * Response: { userId, username, email, role, levelId, gradeLevel, isActive, createdAt }
    */
-  register: (data: RegisterDto): Promise<ApiResponse<User>> => {
-    return apiClient.post<User>(ENDPOINTS.AUTH.REGISTER, data);
+  register: async (data: RegisterDto): Promise<ApiResponse<User>> => {
+    const response = await apiClient.post<User>(ENDPOINTS.AUTH.REGISTER, data);
+    
+    // Backend trả về user object trực tiếp sau khi tạo thành công
+    if (response.success && response.data) {
+      return response;
+    }
+    
+    // Nếu backend trả về user trực tiếp (không có success wrapper)
+    if ((response as any).userId) {
+      return {
+        success: true,
+        data: response as any,
+      };
+    }
+    
+    return response;
   },
 
   /**

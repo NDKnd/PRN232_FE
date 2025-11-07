@@ -14,11 +14,14 @@ export type {
   AuthUser,
   AuthResponse,
   LoginState,
+  RegisterState,
+  User,
 } from "./types";
 
 // Hooks
 export {
   useAuth,
+  useRegister,
   useCurrentUser,
   useLogout,
   useChangePassword,
