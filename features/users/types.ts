@@ -28,3 +28,12 @@ export interface UpdateUserDto {
   credit?: number;
   isActive?: boolean;
 }
+
+export interface CreateUserDto {
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  levelId?: number | null;
+  gradeLevel?: string | null;
+}

@@ -59,10 +59,14 @@ class ApiClient {
   ): string {
     // Combine baseURL and endpoint properly
     // Remove leading slash from endpoint if baseURL ends with slash
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const cleanBase = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
+    const cleanEndpoint = endpoint.startsWith("/")
+      ? endpoint.slice(1)
+      : endpoint;
+    const cleanBase = this.baseURL.endsWith("/")
+      ? this.baseURL
+      : this.baseURL + "/";
     const fullUrl = cleanBase + cleanEndpoint;
-    
+
     const url = new URL(fullUrl);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -100,12 +104,25 @@ class ApiClient {
       // Handle non-JSON responses
       const contentType = response.headers.get("content-type");
       if (!contentType?.includes("application/json")) {
+        const text = await response.text();
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          console.error("API Error Response:", text);
+          return {
+            success: false,
+            error: {
+              code: response.status,
+              message:
+                response.status === 500
+                  ? "Internal Server Error"
+                  : "Request failed",
+            },
+          };
         }
+
         return {
           success: true,
-          data: (await response.text()) as any,
+          data: text as any,
         };
       }
 
