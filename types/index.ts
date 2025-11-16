@@ -29,3 +29,17 @@ export type {
   AiGenerateMode,
   AiGenerateResult,
 } from "./ai.type";
+export type {
+  Quiz,
+  QuizDetail,
+  QuizStatistics,
+  CreateQuizRequest,
+  UpdateQuizRequest,
+  QuizSearchParams,
+  Question,
+  Answer,
+  Level,
+  QuizStatus,
+  QuestionType,
+  Topic,
+} from "./quiz.type";

@@ -19,6 +19,7 @@ import {
   Zap,
   Bot,
   History,
+  GraduationCap,
 } from "lucide-react";
 import { useLogout } from "@/features/auth";
 
@@ -29,7 +30,7 @@ interface NavItem {
 }
 
 interface SidebarNavProps {
-  role: "teacher" | "student";
+  role: "teacher" | "student" | "admin";
 }
 
 export function SidebarNav({ role }: SidebarNavProps) {
@@ -52,6 +53,11 @@ export function SidebarNav({ role }: SidebarNavProps) {
       label: "Question Bank",
       href: "/teacher/questions",
       icon: <HelpCircle className="w-5 h-5" />,
+    },
+    {
+      label: "Quizzes",
+      href: "/teacher/quizzes",
+      icon: <GraduationCap className="w-5 h-5" />,
     },
     {
       label: "AI Workspace",
@@ -98,7 +104,26 @@ export function SidebarNav({ role }: SidebarNavProps) {
     },
   ];
 
-  const navItems = role === "teacher" ? teacherNav : studentNav;
+  const adminNav: NavItem[] = [
+    {
+      label: "Dashboard",
+      href: "/admin/dashboard",
+      icon: <BarChart3 className="w-5 h-5" />,
+    },
+    {
+      label: "Quizzes",
+      href: "/admin/quizzes",
+      icon: <GraduationCap className="w-5 h-5" />,
+    },
+    {
+      label: "Settings",
+      href: "/admin/settings",
+      icon: <Settings className="w-5 h-5" />,
+    },
+  ];
+
+  const navItems =
+    role === "teacher" ? teacherNav : role === "admin" ? adminNav : studentNav;
 
   return (
     <>

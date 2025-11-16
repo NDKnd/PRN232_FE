@@ -1,16 +1,17 @@
-import Sidebar from "@/components/admin/Sidebar";
-import "../globals.css";
+import type React from "react";
+import { SidebarNav } from "@/components/sidebar-nav";
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar là client component */}
-      <Sidebar />
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+    <div className="flex h-screen">
+      <SidebarNav role="admin" />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-4 md:p-8">{children}</div>
+      </main>
     </div>
   );
 }
