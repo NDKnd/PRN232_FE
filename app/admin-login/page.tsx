@@ -13,10 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth";
+import { useSearchParams } from "next/navigation";
 
 function AdminLoginContent() {
   const { loginState, updateField, handleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get("err");
 
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +45,10 @@ function AdminLoginContent() {
         </CardHeader>
 
         <CardContent>
-          {loginState.error && (
+          {(loginState.error || errorParam) && (
             <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
-              {loginState.error}
+              {loginState.error || errorParam}
             </div>
           )}
 
