@@ -56,10 +56,48 @@ export const ENDPOINTS = {
     BY_ID: (id: number) => `/difficulties/${id}`,
   },
 
+  // Questions
+  QUESTIONS: {
+    BASE: "/questions",
+    AVAILABLE: "/questions/available",
+  },
+
+  // Levels
+  LEVELS: {
+    BASE: "/levels",
+    BY_ID: (id: number) => `/levels/${id}`,
+  },
+
   // Attachments
   ATTACHMENTS: {
     BASE: "/attachments",
     BY_ID: (id: number) => `/attachments/${id}`,
+  },
+
+  // Quizzes
+  QUIZZES: {
+    BASE: "/quizzes",
+    BY_ID: (id: number) => `/quizzes/${id}`,
+    MY_QUIZZES: "/quizzes/my-quizzes",
+    PUBLISH: (id: number) => `/quizzes/${id}/publish`,
+    UNPUBLISH: (id: number) => `/quizzes/${id}/unpublish`,
+    STATISTICS: (id: number) => `/quizzes/${id}/statistics`,
+    ADD_QUESTIONS: (id: number) => `/quizzes/${id}/questions`,
+    REMOVE_QUESTION: (id: number, questionId: number) => `/quizzes/${id}/questions/${questionId}`,
+  },
+
+  // AI
+  AI: {
+    LESSON_PLANS_GENERATE: "/ai/lesson-plans/generate",
+    LESSON_PLANS_PREVIEW: "/ai/lesson-plans/preview",
+    QUESTIONS_GENERATE: "/ai/questions/generate",
+    QUESTIONS_PREVIEW: "/ai/questions/preview",
+    QUIZZES_GENERATE: "/ai/quizzes/generate",
+    QUIZZES_PREVIEW: "/ai/quizzes/preview",
+    CHAT: "/ai/chat",
+    HEALTH: "/ai/health",
+    REQUESTS_HISTORY: "/ai/requests/history",
+    REQUESTS_DETAIL: (id: number) => `/ai/requests/${id}`,
   },
 } as const;
 

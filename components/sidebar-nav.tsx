@@ -7,7 +7,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { BookOpen, BarChart3, Settings, LogOut, Menu, X, FileText, HelpCircle, Zap, Bot, History } from "lucide-react"
+import { BookOpen, BarChart3, Settings, LogOut, Menu, X, FileText, HelpCircle, Zap, Bot, History, GraduationCap } from "lucide-react"
 
 interface NavItem {
   label: string
@@ -16,7 +16,7 @@ interface NavItem {
 }
 
 interface SidebarNavProps {
-  role: "teacher" | "student"
+  role: "teacher" | "student" | "admin"
 }
 
 export function SidebarNav({ role }: SidebarNavProps) {
@@ -27,6 +27,7 @@ export function SidebarNav({ role }: SidebarNavProps) {
     { label: "Dashboard", href: "/teacher/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
     { label: "Lesson Plans", href: "/teacher/lessons", icon: <BookOpen className="w-5 h-5" /> },
     { label: "Question Bank", href: "/teacher/questions", icon: <HelpCircle className="w-5 h-5" /> },
+    { label: "Quizzes", href: "/teacher/quizzes", icon: <GraduationCap className="w-5 h-5" /> },
     { label: "AI Workspace", href: "/teacher/ai-workspace", icon: <Bot className="w-5 h-5" /> },
     { label: "AI History", href: "/teacher/ai-history", icon: <History className="w-5 h-5" /> },
     { label: "Export Center", href: "/teacher/export", icon: <FileText className="w-5 h-5" /> },
@@ -40,7 +41,13 @@ export function SidebarNav({ role }: SidebarNavProps) {
     { label: "Settings", href: "/student/settings", icon: <Settings className="w-5 h-5" /> },
   ]
 
-  const navItems = role === "teacher" ? teacherNav : studentNav
+  const adminNav: NavItem[] = [
+    { label: "Dashboard", href: "/admin/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
+    { label: "Quizzes", href: "/admin/quizzes", icon: <GraduationCap className="w-5 h-5" /> },
+    { label: "Settings", href: "/admin/settings", icon: <Settings className="w-5 h-5" /> },
+  ]
+
+  const navItems = role === "teacher" ? teacherNav : role === "admin" ? adminNav : studentNav
 
   return (
     <>
