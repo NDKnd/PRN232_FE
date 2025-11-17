@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,11 +39,22 @@ import {
   useQuestionGenerator,
   useQuizGenerator,
 } from "@/features/ai/hooks";
+import { useLevels } from "@/features/levels";
 import type {
   AiLessonPlanRequest,
   AiQuestionRequest,
   AiQuizRequest,
 } from "@/types";
+import { MarkdownLatexRenderer } from "@/components/markdown-latex-renderer";
+
+const deriveGradeFromLevel = (level: { order: number; levelName: string }) => {
+  if (typeof level.order === "number" && Number.isFinite(level.order)) {
+    return level.order;
+  }
+  const digits = level.levelName.match(/\d+/);
+  const parsed = digits ? parseInt(digits[0], 10) : NaN;
+  return Number.isNaN(parsed) ? 1 : parsed;
+};
 
 export default function AiWorkspacePage() {
   const [activeTab, setActiveTab] = useState("chat");
@@ -373,10 +384,11 @@ function LessonPlanTab() {
               type="number"
               min="30"
               max="90"
-              value={formData.duration}
-              onChange={(e) =>
-                setFormData({ ...formData, duration: parseInt(e.target.value) })
-              }
+              value={formData.duration || ""}
+              onChange={(e) => {
+                const value = e.target.value === "" ? 45 : parseInt(e.target.value);
+                setFormData({ ...formData, duration: isNaN(value) ? 45 : value });
+              }}
             />
             <p className="text-xs text-muted-foreground">Between 30-90 minutes</p>
           </div>
@@ -485,7 +497,22 @@ function LessonPlanTab() {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px]">
-            {generatedPlan ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium">Generating lesson plan...</p>
+                    <p className="text-sm">
+                      AI is creating a customized lesson plan for your topic.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      This may take up to 2-3 minutes depending on complexity.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : generatedPlan ? (
               <div className="space-y-4">
                 <div>
                   <Badge variant="default" className="mb-2">
@@ -549,10 +576,10 @@ function LessonPlanTab() {
 
                 <div>
                   <h4 className="font-semibold mb-2">Learning Objectives</h4>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-disc list-inside space-y-2">
                     {previewData.learningObjectives?.map((obj, index) => (
                       <li key={index} className="text-sm">
-                        {obj}
+                        <MarkdownLatexRenderer content={obj} />
                       </li>
                     ))}
                   </ul>
@@ -562,10 +589,10 @@ function LessonPlanTab() {
 
                 <div>
                   <h4 className="font-semibold mb-2">Materials</h4>
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-disc list-inside space-y-2">
                     {previewData.materials?.map((material, index) => (
                       <li key={index} className="text-sm">
-                        {material}
+                        <MarkdownLatexRenderer content={material} />
                       </li>
                     ))}
                   </ul>
@@ -576,16 +603,19 @@ function LessonPlanTab() {
                 <div>
                   <h4 className="font-semibold mb-2">Activities</h4>
                   {previewData.activities?.map((activity, index) => (
-                    <div key={index} className="mb-3 p-3 bg-muted rounded-lg">
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-medium">{activity.title}</h5>
+                    <div key={index} className="mb-3 p-4 bg-muted rounded-lg border">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="font-medium text-base">{activity.title}</h5>
                         <Badge variant="outline">{activity.duration} min</Badge>
                       </div>
-                      <p className="text-sm mt-2">{activity.description}</p>
+                      <div className="text-sm mt-2">
+                        <MarkdownLatexRenderer content={activity.description} />
+                      </div>
                       {activity.teacherNotes && (
-                        <p className="text-xs text-muted-foreground mt-2 italic">
-                          Note: {activity.teacherNotes}
-                        </p>
+                        <div className="text-xs text-muted-foreground mt-3 p-2 bg-background/50 rounded border-l-2 border-primary/30">
+                          <span className="font-semibold">Teacher Note:</span>{" "}
+                          <MarkdownLatexRenderer content={activity.teacherNotes} />
+                        </div>
                       )}
                     </div>
                   ))}
@@ -595,7 +625,9 @@ function LessonPlanTab() {
 
                 <div>
                   <h4 className="font-semibold mb-2">Assessment</h4>
-                  <p className="text-sm">{previewData.assessment}</p>
+                  <div className="text-sm">
+                    <MarkdownLatexRenderer content={previewData.assessment} />
+                  </div>
                 </div>
 
                 {previewData.homework && (
@@ -603,7 +635,9 @@ function LessonPlanTab() {
                     <Separator />
                     <div>
                       <h4 className="font-semibold mb-2">Homework</h4>
-                      <p className="text-sm">{previewData.homework}</p>
+                      <div className="text-sm">
+                        <MarkdownLatexRenderer content={previewData.homework} />
+                      </div>
                     </div>
                   </>
                 )}
@@ -630,15 +664,49 @@ function LessonPlanTab() {
 // Questions Tab Component
 function QuestionsTab() {
   const router = useRouter();
-  const { isLoading, previewData, preview, generate, clearPreview } =
+  const { isLoading, previewData, generatedQuestions, preview, generate, clearPreview, clearGenerated } =
     useQuestionGenerator();
+  const { levels, isLoading: isLoadingLevels } = useLevels();
+
+  // Get user info from localStorage
+  const getUserId = () => {
+    if (typeof window !== "undefined") {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.userId || 0;
+      }
+    }
+    return 0;
+  };
 
   const [formData, setFormData] = useState<AiQuestionRequest>({
     topic: "",
+    gradeLevel: 1, // Default to grade 1
+    questionType: "multiple_choice",
+    difficulty: "medium",
     count: 5,
-    questionType: "MultipleChoice",
-    gradeLevel: "",
+    includeSolution: true,
+    levelId: undefined,
+    userId: getUserId(),
   });
+
+  useEffect(() => {
+    if (isLoadingLevels || levels.length === 0) {
+      return;
+    }
+    setFormData((current) => {
+      if (current.levelId) {
+        return current;
+      }
+      const defaultLevel = levels[0];
+      return {
+        ...current,
+        levelId: defaultLevel.levelId,
+        gradeLevel: deriveGradeFromLevel(defaultLevel),
+      };
+    });
+  }, [isLoadingLevels, levels]);
 
   const handlePreview = () => {
     preview(formData);
@@ -678,18 +746,19 @@ function QuestionsTab() {
               type="number"
               min="1"
               max="20"
-              value={formData.count}
-              onChange={(e) =>
-                setFormData({ ...formData, count: parseInt(e.target.value) })
-              }
+              value={formData.count || ""}
+              onChange={(e) => {
+                const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                setFormData({ ...formData, count: isNaN(value) ? 1 : value });
+              }}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="q-type">Question Type</Label>
+            <Label htmlFor="q-type">Question Type *</Label>
             <Select
               value={formData.questionType}
-              onValueChange={(value: any) =>
+              onValueChange={(value) =>
                 setFormData({ ...formData, questionType: value })
               }
             >
@@ -697,29 +766,75 @@ function QuestionsTab() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="MultipleChoice">Multiple Choice</SelectItem>
-                <SelectItem value="TrueFalse">True/False</SelectItem>
-                <SelectItem value="ShortAnswer">Short Answer</SelectItem>
-                <SelectItem value="Essay">Essay</SelectItem>
+                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                <SelectItem value="true_false">True/False</SelectItem>
+                <SelectItem value="short_answer">Short Answer</SelectItem>
+                <SelectItem value="essay">Essay</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="q-grade">Grade Level</Label>
+            <Label htmlFor="q-difficulty">Difficulty *</Label>
             <Select
-              value={formData.gradeLevel}
+              value={formData.difficulty}
               onValueChange={(value) =>
-                setFormData({ ...formData, gradeLevel: value })
+                setFormData({ ...formData, difficulty: value })
               }
             >
-              <SelectTrigger id="q-grade">
+              <SelectTrigger id="q-difficulty">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="q-grade">Grade Level *</Label>
+            <Select
+              value={formData.levelId ? formData.levelId.toString() : ""}
+              onValueChange={(value) => {
+                const selectedLevel = levels.find(
+                  (level) => level.levelId.toString() === value
+                );
+                if (selectedLevel) {
+                  setFormData({
+                    ...formData,
+                    levelId: selectedLevel.levelId,
+                    gradeLevel: deriveGradeFromLevel(selectedLevel),
+                  });
+                }
+              }}
+              disabled={isLoadingLevels}
+            >
+              <SelectTrigger id="q-grade" className="w-full">
                 <SelectValue placeholder="Select grade level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Elementary">Elementary</SelectItem>
-                <SelectItem value="Middle School">Middle School</SelectItem>
-                <SelectItem value="High School">High School</SelectItem>
+                {isLoadingLevels ? (
+                  <SelectItem value="loading" disabled>
+                    Loading levels...
+                  </SelectItem>
+                ) : levels.length === 0 ? (
+                  <SelectItem value="empty" disabled>
+                    No levels available
+                  </SelectItem>
+                ) : (
+                  levels.map((level) => {
+                    return (
+                      <SelectItem
+                        key={level.levelId}
+                        value={level.levelId.toString()}
+                      >
+                        Grade {level.levelName} - {level.educationLevel}
+                      </SelectItem>
+                    );
+                  })
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -729,7 +844,7 @@ function QuestionsTab() {
           <div className="flex gap-2">
             <Button
               onClick={handlePreview}
-              disabled={isLoading || !formData.topic}
+              disabled={isLoading || !formData.topic || !formData.gradeLevel}
               variant="outline"
               className="flex-1"
             >
@@ -742,7 +857,7 @@ function QuestionsTab() {
             </Button>
             <Button
               onClick={handleGenerate}
-              disabled={isLoading || !formData.topic}
+              disabled={isLoading || !formData.topic || !formData.gradeLevel}
               className="flex-1"
             >
               {isLoading ? (
@@ -759,11 +874,85 @@ function QuestionsTab() {
       {/* Preview */}
       <Card>
         <CardHeader>
-          <CardTitle>Preview</CardTitle>
+          <CardTitle>
+            {generatedQuestions ? "Generated Questions" : "Preview"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px]">
-            {previewData && previewData.questions ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium">Generating questions...</p>
+                    <p className="text-sm">
+                      AI is creating {formData.count} questions for your topic.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      This may take 1-2 minutes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : generatedQuestions ? (
+              <div className="space-y-4">
+                <div>
+                  <Badge variant="default" className="mb-2">
+                    Successfully Generated
+                  </Badge>
+                  <h3 className="text-xl font-semibold">
+                    {generatedQuestions.count} Questions Created
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Topic: {formData.topic}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Difficulty: {formData.difficulty}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Type: {formData.questionType}
+                  </p>
+                </div>
+                <Separator />
+                <div className="text-sm">
+                  <p className="font-medium mb-2">Question IDs:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {generatedQuestions.questionIds.map((id) => (
+                      <Badge key={id} variant="outline">
+                        #{id}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+                <div className="text-sm">
+                  <p className="mt-2">
+                    The questions have been saved to the database. You can
+                    view and manage them in the Question Bank section.
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/teacher/ai-history")}
+                  >
+                    <History className="h-4 w-4 mr-2" />
+                    View in History
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/teacher/questions")}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Questions
+                  </Button>
+                  <Button variant="outline" onClick={() => clearGenerated()}>
+                    Generate More
+                  </Button>
+                </div>
+              </div>
+            ) : previewData && previewData.questions ? (
               <div className="space-y-4">
                 {previewData.questions.map((question, index) => (
                   <Card key={index}>
@@ -776,35 +965,37 @@ function QuestionsTab() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <p className="font-medium">{question.questionText}</p>
+                      <div className="font-medium">
+                        <MarkdownLatexRenderer content={question.questionText} />
+                      </div>
 
                       {question.options && question.options.length > 0 && (
                         <div className="space-y-2">
                           {question.options.map((option, optIndex) => (
                             <div
                               key={optIndex}
-                              className={`p-2 rounded border ${
+                              className={`p-3 rounded border ${
                                 option === question.correctAnswer
                                   ? "bg-green-50 border-green-300 dark:bg-green-950 dark:border-green-800"
                                   : "bg-muted"
                               }`}
                             >
-                              {option}
+                              <MarkdownLatexRenderer content={option} />
                             </div>
                           ))}
                         </div>
                       )}
 
-                      <div className="space-y-1">
-                        <p className="text-sm">
+                      <div className="space-y-2 pt-2">
+                        <div className="text-sm">
                           <span className="font-semibold">Correct Answer:</span>{" "}
-                          {question.correctAnswer}
-                        </p>
+                          <MarkdownLatexRenderer content={question.correctAnswer} className="inline" />
+                        </div>
                         {question.explanation && (
-                          <p className="text-sm text-muted-foreground">
+                          <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
                             <span className="font-semibold">Explanation:</span>{" "}
-                            {question.explanation}
-                          </p>
+                            <MarkdownLatexRenderer content={question.explanation} />
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -835,14 +1026,47 @@ function QuizTab() {
   const router = useRouter();
   const { isLoading, previewData, generatedQuiz, preview, generate, clearGenerated } =
     useQuizGenerator();
+  const { levels, isLoading: isLoadingLevels } = useLevels();
+
+  // Get user info from localStorage
+  const getUserId = () => {
+    if (typeof window !== "undefined") {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.userId || 0;
+      }
+    }
+    return 0;
+  };
 
   const [formData, setFormData] = useState<AiQuizRequest>({
     title: "",
     topic: "",
+    gradeLevel: 1, // Default to grade 1
     questionCount: 10,
-    timeLimit: 30,
-    gradeLevel: "",
+    duration: 30,
+    includeEssay: false,
+    levelId: undefined,
+    userId: getUserId(),
   });
+
+  useEffect(() => {
+    if (isLoadingLevels || levels.length === 0) {
+      return;
+    }
+    setFormData((current) => {
+      if (current.levelId) {
+        return current;
+      }
+      const defaultLevel = levels[0];
+      return {
+        ...current,
+        levelId: defaultLevel.levelId,
+        gradeLevel: deriveGradeFromLevel(defaultLevel),
+      };
+    });
+  }, [isLoadingLevels, levels]);
 
   const handlePreview = () => {
     preview(formData);
@@ -894,13 +1118,14 @@ function QuizTab() {
               type="number"
               min="5"
               max="50"
-              value={formData.questionCount}
-              onChange={(e) =>
+              value={formData.questionCount || ""}
+              onChange={(e) => {
+                const value = e.target.value === "" ? 10 : parseInt(e.target.value);
                 setFormData({
                   ...formData,
-                  questionCount: parseInt(e.target.value),
-                })
-              }
+                  questionCount: isNaN(value) ? 10 : value,
+                });
+              }}
             />
           </div>
 
@@ -911,31 +1136,59 @@ function QuizTab() {
               type="number"
               min="5"
               max="180"
-              value={formData.timeLimit}
-              onChange={(e) =>
+              value={formData.duration || ""}
+              onChange={(e) => {
+                const value = e.target.value === "" ? 30 : parseInt(e.target.value);
                 setFormData({
                   ...formData,
-                  timeLimit: parseInt(e.target.value),
-                })
-              }
+                  duration: isNaN(value) ? 30 : value,
+                });
+              }}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quiz-grade">Grade Level</Label>
+            <Label htmlFor="quiz-grade">Grade Level *</Label>
             <Select
-              value={formData.gradeLevel}
-              onValueChange={(value) =>
-                setFormData({ ...formData, gradeLevel: value })
-              }
+              value={formData.levelId ? formData.levelId.toString() : ""}
+              onValueChange={(value) => {
+                const selectedLevel = levels.find(
+                  (level) => level.levelId.toString() === value
+                );
+                if (selectedLevel) {
+                  setFormData({
+                    ...formData,
+                    levelId: selectedLevel.levelId,
+                    gradeLevel: deriveGradeFromLevel(selectedLevel),
+                  });
+                }
+              }}
+              disabled={isLoadingLevels}
             >
-              <SelectTrigger id="quiz-grade">
+              <SelectTrigger id="quiz-grade" className="w-full">
                 <SelectValue placeholder="Select grade level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Elementary">Elementary</SelectItem>
-                <SelectItem value="Middle School">Middle School</SelectItem>
-                <SelectItem value="High School">High School</SelectItem>
+                {isLoadingLevels ? (
+                  <SelectItem value="loading" disabled>
+                    Loading levels...
+                  </SelectItem>
+                ) : levels.length === 0 ? (
+                  <SelectItem value="empty" disabled>
+                    No levels available
+                  </SelectItem>
+                ) : (
+                  levels.map((level) => {
+                    return (
+                      <SelectItem
+                        key={level.levelId}
+                        value={level.levelId.toString()}
+                      >
+                        Grade {level.levelName} - {level.educationLevel}
+                      </SelectItem>
+                    );
+                  })
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -945,7 +1198,7 @@ function QuizTab() {
           <div className="flex gap-2">
             <Button
               onClick={handlePreview}
-              disabled={isLoading || !formData.title || !formData.topic}
+              disabled={isLoading || !formData.title || !formData.topic || !formData.gradeLevel}
               variant="outline"
               className="flex-1"
             >
@@ -958,7 +1211,7 @@ function QuizTab() {
             </Button>
             <Button
               onClick={handleGenerate}
-              disabled={isLoading || !formData.title || !formData.topic}
+              disabled={isLoading || !formData.title || !formData.topic || !formData.gradeLevel}
               className="flex-1"
             >
               {isLoading ? (
@@ -981,15 +1234,33 @@ function QuizTab() {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px]">
-            {generatedQuiz ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium">Generating quiz...</p>
+                    <p className="text-sm">
+                      AI is creating a quiz with {formData.questionCount} questions.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      This may take 2-3 minutes depending on complexity.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : generatedQuiz ? (
               <div className="space-y-4">
                 <div>
                   <Badge variant="default" className="mb-2">
-                    {generatedQuiz.status}
+                    Successfully Generated
                   </Badge>
                   <h3 className="text-xl font-semibold">
                     {generatedQuiz.title}
                   </h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Topic: {formData.topic}
+                  </p>
                   <div className="mt-3 space-y-1">
                     <p className="text-sm">
                       <span className="font-medium">Questions:</span>{" "}
@@ -1010,12 +1281,14 @@ function QuizTab() {
                 </div>
                 <Separator />
                 <div className="text-sm">
-                  <p className="text-muted-foreground">
-                    Quiz ID: {generatedQuiz.quizId}
-                  </p>
+                  <p className="font-medium mb-1">Quiz ID:</p>
+                  <Badge variant="outline">#{generatedQuiz.quizId}</Badge>
+                </div>
+                <Separator />
+                <div className="text-sm">
                   <p className="mt-2">
                     The quiz has been saved to the database. You can view and
-                    manage it in the lessons section.
+                    manage it in the Quizzes section.
                   </p>
                 </div>
                 <div className="flex gap-2 mt-4">
@@ -1028,7 +1301,7 @@ function QuizTab() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => router.push("/teacher/lessons?tab=quizzes")}
+                    onClick={() => router.push("/teacher/quizzes")}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View Quiz
@@ -1073,30 +1346,32 @@ function QuizTab() {
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                          <p className="font-medium">{question.questionText}</p>
+                          <div className="font-medium">
+                            <MarkdownLatexRenderer content={question.questionText} />
+                          </div>
 
                           {question.options && question.options.length > 0 && (
                             <div className="space-y-2">
                               {question.options.map((option, optIndex) => (
                                 <div
                                   key={optIndex}
-                                  className={`p-2 rounded border text-sm ${
+                                  className={`p-3 rounded border text-sm ${
                                     option === question.correctAnswer
                                       ? "bg-green-50 border-green-300 dark:bg-green-950 dark:border-green-800"
                                       : "bg-muted"
                                   }`}
                                 >
-                                  {option}
+                                  <MarkdownLatexRenderer content={option} />
                                 </div>
                               ))}
                             </div>
                           )}
 
                           {question.explanation && (
-                            <p className="text-sm text-muted-foreground">
+                            <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
                               <span className="font-semibold">Explanation:</span>{" "}
-                              {question.explanation}
-                            </p>
+                              <MarkdownLatexRenderer content={question.explanation} />
+                            </div>
                           )}
                         </CardContent>
                       </Card>

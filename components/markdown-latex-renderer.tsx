@@ -20,6 +20,14 @@ export function MarkdownLatexRenderer({
   content,
   className = "",
 }: MarkdownLatexRendererProps) {
+  // Handle null/undefined/empty content
+  if (!content) {
+    return <div className={`markdown-latex-content ${className}`}></div>;
+  }
+
+  // Convert literal \n to actual newlines
+  const normalizedContent = content.replace(/\\n/g, '\n');
+
   const renderContent = (text: string) => {
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
@@ -193,7 +201,7 @@ export function MarkdownLatexRenderer({
 
   return (
     <div className={`markdown-latex-content ${className}`}>
-      {renderContent(content)}
+      {renderContent(normalizedContent)}
     </div>
   );
 }

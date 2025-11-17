@@ -63,11 +63,15 @@ export interface GeneratedLessonPlan {
 // Question Types
 export interface AiQuestionRequest {
   topic: string;
+  gradeLevel: number; // 1-12, required by backend
+  questionType: string; // 'multiple_choice', 'true_false', 'short_answer', 'essay'
+  difficulty: string; // 'easy', 'medium', 'hard', required by backend
   count: number;
+  includeSolution?: boolean;
+  questionBankId?: number;
+  userId?: number;
+  levelId?: number;
   difficultyId?: number;
-  questionType?: 'MultipleChoice' | 'TrueFalse' | 'ShortAnswer' | 'Essay';
-  gradeLevel?: string;
-  bloom_taxonomy_level?: string;
 }
 
 export interface AiQuestionResponse {
@@ -95,10 +99,15 @@ export interface SavedQuestion {
 export interface AiQuizRequest {
   title: string;
   topic: string;
+  gradeLevel: number; // 1-12
+  duration?: number;
   questionCount: number;
-  difficultyId?: number;
-  timeLimit?: number;
-  gradeLevel?: string;
+  difficultyDistribution?: Record<string, number>;
+  includeEssay?: boolean;
+  questionBankId?: number;
+  userId?: number;
+  levelId?: number;
+}
   questionTypes?: string[];
 }
 

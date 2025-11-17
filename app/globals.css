@@ -125,3 +125,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom styles for LaTeX and Math rendering */
+.markdown-latex-content {
+  @apply leading-relaxed;
+}
+
+.markdown-latex-content .katex {
+  @apply text-base;
+}
+
+.markdown-latex-content .katex-display {
+  @apply my-4;
+}
+
+/* Improve readability for AI generated content */
+.ai-preview-content ul {
+  @apply space-y-1;
+}
+
+.ai-preview-content li {
+  @apply leading-relaxed;
+}
+
+/* Loading animation for AI generation */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.ai-loading {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

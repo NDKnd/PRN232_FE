@@ -52,10 +52,34 @@ export const generateLessonPlan = async (
 export const previewQuestions = async (
   request: AiQuestionRequest
 ): Promise<ApiResponse<AiQuestionResponse>> => {
-  return apiClient.post<AiQuestionResponse>(
+  const response = await apiClient.post<any>(
     `${AI_BASE_PATH}/questions/preview`,
     request
   );
+
+  // Transform API response to match FE types
+  if (response.success && response.data && response.data.questions) {
+    const transformedQuestions = response.data.questions.map((q: any) => ({
+      questionText: q.question_text,
+      questionType: q.question_type === 'multiple_choice' ? 'MultipleChoice' : 
+                    q.question_type === 'true_false' ? 'TrueFalse' :
+                    q.question_type === 'short_answer' ? 'ShortAnswer' : 'Essay',
+      options: q.choices ? q.choices.map((c: any) => c.text) : undefined,
+      correctAnswer: q.correct_answer,
+      explanation: q.solution,
+      difficulty: q.difficulty,
+      bloomLevel: q.bloom_level,
+    }));
+
+    return {
+      ...response,
+      data: {
+        questions: transformedQuestions,
+      },
+    };
+  }
+
+  return response as ApiResponse<AiQuestionResponse>;
 };
 
 export const generateQuestions = async (
@@ -76,10 +100,38 @@ export const generateQuestions = async (
 export const previewQuiz = async (
   request: AiQuizRequest
 ): Promise<ApiResponse<AiQuizResponse>> => {
-  return apiClient.post<AiQuizResponse>(
+  const response = await apiClient.post<any>(
     `${AI_BASE_PATH}/quizzes/preview`,
     request
   );
+
+  // Transform API response to match FE types
+  if (response.success && response.data) {
+    const transformedQuestions = response.data.questions?.map((q: any) => ({
+      questionText: q.question_text,
+      questionType: q.question_type === 'multiple_choice' ? 'MultipleChoice' : 
+                    q.question_type === 'true_false' ? 'TrueFalse' :
+                    q.question_type === 'short_answer' ? 'ShortAnswer' : 'Essay',
+      options: q.choices ? q.choices.map((c: any) => c.text) : undefined,
+      correctAnswer: q.correct_answer,
+      explanation: q.solution,
+      difficulty: q.difficulty,
+      bloomLevel: q.bloom_level,
+    })) || [];
+
+    return {
+      ...response,
+      data: {
+        title: response.data.title || request.title,
+        description: response.data.description || `Quiz on ${request.topic}`,
+        timeLimit: response.data.time_limit || response.data.timeLimit || request.duration || 30,
+        totalScore: response.data.total_score || response.data.totalScore || transformedQuestions.length * 10,
+        questions: transformedQuestions,
+      },
+    };
+  }
+
+  return response as ApiResponse<AiQuizResponse>;
 };
 
 export const generateQuiz = async (

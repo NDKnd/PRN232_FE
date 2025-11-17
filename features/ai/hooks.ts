@@ -243,6 +243,11 @@ export const useQuestionGenerator = () => {
   const [previewData, setPreviewData] = useState<AiQuestionResponse | null>(
     null
   );
+  const [generatedQuestions, setGeneratedQuestions] = useState<{
+    count: number;
+    questionIds: number[];
+    message: string;
+  } | null>(null);
   const { toast } = useToast();
 
   const preview = useCallback(
@@ -310,6 +315,11 @@ export const useQuestionGenerator = () => {
             });
           }
 
+          // Store generated result
+          setGeneratedQuestions(response.data);
+          // Clear preview when generated
+          setPreviewData(null);
+
           toast({
             title: "Success",
             description: response.data.message,
@@ -350,9 +360,11 @@ export const useQuestionGenerator = () => {
   return {
     isLoading,
     previewData,
+    generatedQuestions,
     preview,
     generate,
     clearPreview: () => setPreviewData(null),
+    clearGenerated: () => setGeneratedQuestions(null),
   };
 };
 
