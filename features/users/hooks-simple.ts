@@ -36,7 +36,7 @@ export function useUsers(page = 1, limit = 10): UseUsersResult {
     setError(null);
 
     try {
-      const response = await userApi.getAll(page, limit);
+      const response = await userApi.getAll();
       if (response.success) {
         setData(response.data || null);
         setPagination(response.pagination);

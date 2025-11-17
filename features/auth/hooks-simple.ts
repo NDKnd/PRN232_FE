@@ -2,10 +2,25 @@
  * Auth Hooks
  * React hooks for authentication without external dependencies
  */
-
+import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
-import { authApi, authStorage } from "./api";
-import type { LoginDto, RegisterDto, AuthUser, LoginState, RegisterState, UserRole } from "./types";
+import { authApi } from "./api";
+import type {
+  LoginDto,
+  RegisterDto,
+  AuthUser,
+  LoginState,
+  RegisterState,
+  UserRole,
+} from "./types";
+import { authStorage } from "./storage";
+
+/**
+ * Role Protection and Redirection
+ */
+export function useRoleGuard(requiredRole: string) {
+  const router = useRouter();
+}
 
 /**
  * Get redirect URL based on role
@@ -62,7 +77,11 @@ export function useAuth() {
         if (response.success && response.data) {
           // Save token and user data
           authStorage.saveToken(response.data.token);
-          
+
+          // Save to cookies so middleware works
+          document.cookie = `token=${response.data.token}; path=/; max-age=86400; SameSite=Lax`;
+          document.cookie = `role=${response.data.role}; path=/; max-age=86400; SameSite=Lax`;
+
           // Create AuthUser object from response
           const authUser: AuthUser = {
             userId: response.data.userId,
@@ -126,13 +145,16 @@ export function useRegister() {
     error: undefined,
   });
 
-  const updateField = useCallback((field: keyof RegisterState, value: string | number) => {
-    setRegisterState((prev) => ({
-      ...prev,
-      [field]: value,
-      error: undefined, // Clear error when user types
-    }));
-  }, []);
+  const updateField = useCallback(
+    (field: keyof RegisterState, value: string | number) => {
+      setRegisterState((prev) => ({
+        ...prev,
+        [field]: value,
+        error: undefined, // Clear error when user types
+      }));
+    },
+    []
+  );
 
   const handleRegister = useCallback(async () => {
     setRegisterState((prev) => ({

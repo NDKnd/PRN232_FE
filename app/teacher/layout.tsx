@@ -1,12 +1,12 @@
-import type React from "react"
-import { SidebarNav } from "@/components/sidebar-nav"
-import { AuthCheck } from "@/components/auth-check"
-import { AiChatBox } from "@/components/ai-chat-box"
+import type React from "react";
+import { SidebarNav } from "@/components/sidebar-nav";
+import { AuthCheck } from "@/components/auth-check";
+import { AiChatBox } from "@/components/ai-chat-box";
 
 export default function TeacherLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <AuthCheck requiredRole="teacher">
@@ -18,5 +18,5 @@ export default function TeacherLayout({
         <AiChatBox />
       </div>
     </AuthCheck>
-  )
+  );
 }

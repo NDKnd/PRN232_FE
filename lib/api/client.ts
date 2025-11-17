@@ -1,6 +1,7 @@
 /**
  * API Client Configuration
  * Centralized API client with error handling and interceptors
+ * Supports both wrapped { success, data } and raw object responses
  */
 
 export interface ApiResponse<T = any> {
@@ -35,9 +36,7 @@ class ApiClient {
     };
   }
 
-  /**
-   * Add authentication token to request
-   */
+  /** Add authentication token to request */
   private getAuthHeaders(): HeadersInit {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -50,19 +49,15 @@ class ApiClient {
     return this.defaultHeaders;
   }
 
-  /**
-   * Build URL with query parameters
-   */
+  /** Build full URL with query parameters */
   private buildURL(
     endpoint: string,
     params?: Record<string, string | number | boolean>
   ): string {
-    // Combine baseURL and endpoint properly
-    // Remove leading slash from endpoint if baseURL ends with slash
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const cleanBase = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
+    const cleanBase = this.baseURL.endsWith("/") ? this.baseURL : this.baseURL + "/";
     const fullUrl = cleanBase + cleanEndpoint;
-    
+
     const url = new URL(fullUrl);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -72,9 +67,7 @@ class ApiClient {
     return url.toString();
   }
 
-  /**
-   * Make HTTP request with timeout
-   */
+  /** Core request method – handles timeout, auth, and both response formats */
   private async request<T>(
     endpoint: string,
     config: RequestConfig = {}
@@ -97,7 +90,7 @@ class ApiClient {
 
       clearTimeout(timeoutId);
 
-      // Handle non-JSON responses
+      // Non-JSON responses (e.g. plain text, blob)
       const contentType = response.headers.get("content-type");
       if (!contentType?.includes("application/json")) {
         if (!response.ok) {
@@ -109,20 +102,35 @@ class ApiClient {
         };
       }
 
-      const data = await response.json();
+      const rawData = await response.json();
 
-      // API returns success/error format
-      if (!response.ok) {
-        return {
-          success: false,
-          error: {
-            code: response.status,
-            message: data.error?.message || data.message || "Request failed",
-          },
-        };
+      // SUCCESS RESPONSE – support both formats
+      if (response.ok) {
+        // 1. Backend trả về wrapper { success: true, data: {...} }
+        if (rawData && typeof rawData === "object" && "success" in rawData) {
+          return rawData as ApiResponse<T>;
+        }
+        // 2. Backend trả về object trực tiếp → tự wrap vào data
+        else {
+          return {
+            success: true,
+            data: rawData as T,
+          };
+        }
       }
 
-      return data;
+      // ERROR RESPONSE
+      return {
+        success: false,
+        error: {
+          code: response.status,
+          message:
+            rawData?.error?.message ||
+            rawData?.message ||
+            response.statusText ||
+            "Request failed",
+        },
+      };
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -130,35 +138,23 @@ class ApiClient {
         if (error.name === "AbortError") {
           return {
             success: false,
-            error: {
-              code: 408,
-              message: "Request timeout",
-            },
+            error: { code: 408, message: "Request timeout" },
           };
         }
-
         return {
           success: false,
-          error: {
-            code: 0,
-            message: error.message || "Network error",
-          },
+          error: { code: 0, message: error.message || "Network error" },
         };
       }
 
       return {
         success: false,
-        error: {
-          code: 0,
-          message: "Unknown error occurred",
-        },
+        error: { code: 0, message: "Unknown error occurred" },
       };
     }
   }
 
-  /**
-   * GET request
-   */
+  // HTTP methods
   async get<T>(
     endpoint: string,
     params?: Record<string, string | number | boolean>
@@ -166,9 +162,6 @@ class ApiClient {
     return this.request<T>(endpoint, { method: "GET", params });
   }
 
-  /**
-   * POST request
-   */
   async post<T>(
     endpoint: string,
     data?: any,
@@ -181,9 +174,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * PUT request
-   */
   async put<T>(
     endpoint: string,
     data?: any,
@@ -196,9 +186,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * PATCH request
-   */
   async patch<T>(
     endpoint: string,
     data?: any,
@@ -211,9 +198,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * DELETE request
-   */
   async delete<T>(
     endpoint: string,
     params?: Record<string, string | number | boolean>
@@ -221,9 +205,7 @@ class ApiClient {
     return this.request<T>(endpoint, { method: "DELETE", params });
   }
 
-  /**
-   * Upload file
-   */
+  /** File upload (multipart/form-data) */
   async upload<T>(
     endpoint: string,
     file: File,
@@ -253,6 +235,6 @@ class ApiClient {
   }
 }
 
-// Export singleton instance
+// Singleton instance
 export const apiClient = new ApiClient();
 export default apiClient;

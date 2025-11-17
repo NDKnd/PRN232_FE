@@ -19,11 +19,13 @@ import { useAuth, type UserRole } from "@/features/auth";
 
 function LoginContent() {
   const searchParams = useSearchParams();
+  const errorParam = searchParams.get("err");
   const { loginState, updateField, handleLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleLogin();
+    const roleParam = searchParams.get("role") as UserRole | null;
+    await handleLogin(roleParam || undefined);
   };
 
   return (
@@ -40,12 +42,13 @@ function LoginContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loginState.error && (
-            <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              {loginState.error}
-            </div>
-          )}
+          {loginState.error ||
+            (errorParam && (
+              <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                {loginState.error || errorParam}
+              </div>
+            ))}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>

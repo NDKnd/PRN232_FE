@@ -1,53 +1,129 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { BookOpen, BarChart3, Settings, LogOut, Menu, X, FileText, HelpCircle, Zap, Bot, History, GraduationCap } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  BookOpen,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  FileText,
+  HelpCircle,
+  Zap,
+  Bot,
+  History,
+  GraduationCap,
+} from "lucide-react";
+import { useLogout } from "@/features/auth";
 
 interface NavItem {
-  label: string
-  href: string
-  icon: React.ReactNode
+  label: string;
+  href: string;
+  icon: React.ReactNode;
 }
 
 interface SidebarNavProps {
-  role: "teacher" | "student" | "admin"
+  role: "teacher" | "student" | "admin";
 }
 
 export function SidebarNav({ role }: SidebarNavProps) {
-  const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const { loading, logout } = useLogout();
 
   const teacherNav: NavItem[] = [
-    { label: "Dashboard", href: "/teacher/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
-    { label: "Lesson Plans", href: "/teacher/lessons", icon: <BookOpen className="w-5 h-5" /> },
-    { label: "Question Bank", href: "/teacher/questions", icon: <HelpCircle className="w-5 h-5" /> },
-    { label: "Quizzes", href: "/teacher/quizzes", icon: <GraduationCap className="w-5 h-5" /> },
-    { label: "AI Workspace", href: "/teacher/ai-workspace", icon: <Bot className="w-5 h-5" /> },
-    { label: "AI History", href: "/teacher/ai-history", icon: <History className="w-5 h-5" /> },
-    { label: "Export Center", href: "/teacher/export", icon: <FileText className="w-5 h-5" /> },
-    { label: "Settings", href: "/teacher/settings", icon: <Settings className="w-5 h-5" /> },
-  ]
+    {
+      label: "Dashboard",
+      href: "/teacher/dashboard",
+      icon: <BarChart3 className="w-5 h-5" />,
+    },
+    {
+      label: "Lesson Plans",
+      href: "/teacher/lessons",
+      icon: <BookOpen className="w-5 h-5" />,
+    },
+    {
+      label: "Question Bank",
+      href: "/teacher/questions",
+      icon: <HelpCircle className="w-5 h-5" />,
+    },
+    {
+      label: "Quizzes",
+      href: "/teacher/quizzes",
+      icon: <GraduationCap className="w-5 h-5" />,
+    },
+    {
+      label: "AI Workspace",
+      href: "/teacher/ai-workspace",
+      icon: <Bot className="w-5 h-5" />,
+    },
+    {
+      label: "AI History",
+      href: "/teacher/ai-history",
+      icon: <History className="w-5 h-5" />,
+    },
+    {
+      label: "Export Center",
+      href: "/teacher/export",
+      icon: <FileText className="w-5 h-5" />,
+    },
+    {
+      label: "Settings",
+      href: "/teacher/settings",
+      icon: <Settings className="w-5 h-5" />,
+    },
+  ];
 
   const studentNav: NavItem[] = [
-    { label: "Dashboard", href: "/student/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
-    { label: "Practice", href: "/student/practice", icon: <Zap className="w-5 h-5" /> },
-    { label: "Progress", href: "/student/progress", icon: <BookOpen className="w-5 h-5" /> },
-    { label: "Settings", href: "/student/settings", icon: <Settings className="w-5 h-5" /> },
-  ]
+    {
+      label: "Dashboard",
+      href: "/student/dashboard",
+      icon: <BarChart3 className="w-5 h-5" />,
+    },
+    {
+      label: "Practice",
+      href: "/student/practice",
+      icon: <Zap className="w-5 h-5" />,
+    },
+    {
+      label: "Progress",
+      href: "/student/progress",
+      icon: <BookOpen className="w-5 h-5" />,
+    },
+    {
+      label: "Settings",
+      href: "/student/settings",
+      icon: <Settings className="w-5 h-5" />,
+    },
+  ];
 
   const adminNav: NavItem[] = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
-    { label: "Quizzes", href: "/admin/quizzes", icon: <GraduationCap className="w-5 h-5" /> },
-    { label: "Settings", href: "/admin/settings", icon: <Settings className="w-5 h-5" /> },
-  ]
+    {
+      label: "Dashboard",
+      href: "/admin/dashboard",
+      icon: <BarChart3 className="w-5 h-5" />,
+    },
+    {
+      label: "Quizzes",
+      href: "/admin/quizzes",
+      icon: <GraduationCap className="w-5 h-5" />,
+    },
+    {
+      label: "Settings",
+      href: "/admin/settings",
+      icon: <Settings className="w-5 h-5" />,
+    },
+  ];
 
-  const navItems = role === "teacher" ? teacherNav : role === "admin" ? adminNav : studentNav
+  const navItems =
+    role === "teacher" ? teacherNav : role === "admin" ? adminNav : studentNav;
 
   return (
     <>
@@ -66,13 +142,15 @@ export function SidebarNav({ role }: SidebarNavProps) {
         className={cn(
           "fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 z-40",
           "md:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="p-6 border-b border-sidebar-border">
           <Link href="/" className="flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-sidebar-primary" />
-            <span className="font-bold text-lg text-sidebar-foreground">MathLearn</span>
+            <span className="font-bold text-lg text-sidebar-foreground">
+              MathLearn
+            </span>
           </Link>
         </div>
 
@@ -83,7 +161,8 @@ export function SidebarNav({ role }: SidebarNavProps) {
                 variant={pathname === item.href ? "default" : "ghost"}
                 className={cn(
                   "w-full justify-start gap-3",
-                  pathname === item.href && "bg-sidebar-primary text-sidebar-primary-foreground",
+                  pathname === item.href &&
+                    "bg-sidebar-primary text-sidebar-primary-foreground"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -98,7 +177,7 @@ export function SidebarNav({ role }: SidebarNavProps) {
           <Button
             variant="outline"
             className="w-full justify-start gap-2 text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent bg-transparent"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => logout()}
           >
             <LogOut className="w-4 h-4" />
             Logout
@@ -107,7 +186,12 @@ export function SidebarNav({ role }: SidebarNavProps) {
       </aside>
 
       {/* Mobile Overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black/50 md:hidden z-30" onClick={() => setIsOpen(false)} />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-30"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
     </>
-  )
+  );
 }

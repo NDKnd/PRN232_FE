@@ -4,7 +4,7 @@
  */
 
 // API
-export { authApi, authStorage } from "./api";
+export { authApi } from "./api";
 
 // Types
 export type {

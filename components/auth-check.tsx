@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authStorage } from "@/features/auth";
 import type { AuthUser } from "@/features/auth";
+import { authStorage } from "@/features/auth/storage";
 
 interface AuthCheckProps {
   children: React.ReactNode;
@@ -11,10 +11,10 @@ interface AuthCheckProps {
   redirectTo?: string;
 }
 
-export function AuthCheck({ 
-  children, 
+export function AuthCheck({
+  children,
   requiredRole,
-  redirectTo = "/login" 
+  redirectTo = "/login",
 }: AuthCheckProps) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
@@ -35,7 +35,7 @@ export function AuthCheck({
       if (requiredRole) {
         const userRole = user.role.toLowerCase();
         const required = requiredRole.toLowerCase();
-        
+
         if (userRole !== required) {
           // Redirect to appropriate dashboard
           router.push(`/${userRole}/dashboard`);

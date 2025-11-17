@@ -99,6 +99,25 @@ export const ENDPOINTS = {
     REQUESTS_HISTORY: "/ai/requests/history",
     REQUESTS_DETAIL: (id: number) => `/ai/requests/${id}`,
   },
+    // Thêm vào file ENDPOINTS
+PROGRESS: {
+    START: (lessonId: number) => `/progress/start/${lessonId}`,
+    COMPLETE: (lessonId: number) => `/progress/complete/${lessonId}`,
+    BY_LESSON_PLAN: (lessonPlanId: number) =>
+      `/progress/lesson-plan/${lessonPlanId}`,
+    OVERALL: "/progress/overall",
+    SCORE_TREND: "/progress/score-trend",
+    TOPICS: "/progress/topics",
+    IMPROVEMENT: "/progress/improvement",
+  },
+
+  // ------------------- SUBMISSIONS -------------------
+  SUBMISSIONS: {
+    START: (quizId: number) => `/submissions/start/${quizId}`,
+    SUBMIT: (submissionId: number) => `/submissions/${submissionId}/submit`,
+    BY_ID: (submissionId: number) => `/submissions/${submissionId}`,
+    BY_QUIZ: (quizId: number) => `/submissions/quiz/${quizId}`,
+  },
 } as const;
 
 export default ENDPOINTS;
